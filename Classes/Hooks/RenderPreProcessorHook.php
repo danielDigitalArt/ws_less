@@ -67,7 +67,8 @@ class RenderPreProcessorHook {
 
         $variablesHash = count($this->variables) > 0 ? hash('md5',implode(",", $this->variables)) : null;
 
-		// we need to rebuild the CSS array to keep order of CSS files
+		// we need to rebuild the CSS array to keep order of CSS
+		// files
 		$cssFiles = array();
 		foreach ($params['cssFiles'] as $file => $conf) {
 			$pathinfo = pathinfo($conf['file']);
@@ -88,6 +89,9 @@ class RenderPreProcessorHook {
                         if (isset($GLOBALS['TSFE']->pSetup['includeCSS.'][$key . '.']['outputdir'])) {
                             $outputdir = trim($GLOBALS['TSFE']->pSetup['includeCSS.'][$key . '.']['outputdir']);
                         }
+						if(isset($GLOBALS['TSFE']->pSetup['includeCSS.'][$key . '.']['noHash'])&&$GLOBALS['TSFE']->pSetup['includeCSS.'][$key . '.']['noHash']==1){
+							$noHash = true;
+						}
                     }
                 }
             }
@@ -109,6 +113,9 @@ class RenderPreProcessorHook {
 			// conflicts with same filename in different folder
             GeneralUtility::mkdir_deep(PATH_site.$outputdir);
 			$cssRelativeFilename = $outputdir.$pathinfo['filename'].(($outputdir == $this->defaultoutputdir) ? "_".hash('sha1',$file) : (count($this->variables) > 0 ? "_".$variablesHash : "")).".css";
+			if($noHash){
+				$cssRelativeFilename = $outputdir.$pathinfo['filename'].".css";
+			}
 			$cssFilename = PATH_site.$cssRelativeFilename;
 
 
@@ -120,7 +127,7 @@ class RenderPreProcessorHook {
 
 			$cache = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Cache\\CacheManager')->getCache('ws_less');
 
-			$cacheKey = hash('sha1',$cssRelativeFilename . $strVars);
+			$cacheKey = hash('sha1',$cssRelativeFilename);
 			$contentHash = $this->calculateContentHash($lessFilename,$strVars);
 			$contentHashCache = '';
 			if ($cache->has($cacheKey)) {
